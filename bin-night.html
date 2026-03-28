@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bin Night 🗑️</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e8eaf0;
+    --muted: #6b7080;
+    --red-bin: #e84040;
+    --red-glow: rgba(232,64,64,0.25);
+    --yellow-bin: #f5c842;
+    --yellow-glow: rgba(245,200,66,0.25);
+    --green-bin: #4caf6e;
+    --green-glow: rgba(76,175,110,0.25);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-x: hidden;
+  }
+
+  /* Subtle background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 40px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .header h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2rem, 8vw, 3rem);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .header .subtitle {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Date chip */
+  .date-chip {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 18px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 40px;
+    animation: fadeDown 0.6s 0.1s ease both;
+    letter-spacing: 0.04em;
+  }
+
+  /* Main card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px 32px;
+    animation: fadeUp 0.6s 0.2s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Glow blob behind bins */
+  .card::before {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    filter: blur(80px);
+    opacity: 0.15;
+    transition: background 0.5s ease;
+    pointer-events: none;
+  }
+
+  .card.glow-red::before    { background: var(--red-bin); }
+  .card.glow-yellow::before { background: var(--yellow-bin); }
+  .card.glow-green::before  { background: var(--green-bin); }
+  .card.glow-multi::before  { background: conic-gradient(var(--yellow-bin), var(--green-bin), var(--yellow-bin)); }
+
+  .status-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+
+  .countdown {
+    margin-bottom: 28px;
+  }
+
+  .countdown-num {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.75rem, 14vw, 4rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .countdown-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* Bins row */
+  .bins {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: flex-end;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
+  .bin-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  .bin-item:nth-child(1) { animation-delay: 0.35s; }
+  .bin-item:nth-child(2) { animation-delay: 0.45s; }
+  .bin-item:nth-child(3) { animation-delay: 0.55s; }
+
+  /* SVG Bin */
+  .bin-svg {
+    width: 72px;
+    filter: drop-shadow(0 8px 24px var(--bin-glow, rgba(0,0,0,0.4)));
+    transition: transform 0.2s ease;
+  }
+
+  .bin-item:hover .bin-svg {
+    transform: translateY(-4px) rotate(-2deg);
+  }
+
+  .bin-label {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* Collection day callout */
+  .collection-day {
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .day-badge {
+    background: #fff;
+    color: #0f1117;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 100px;
+  }
+
+  /* Not Tuesday state */
+  .not-tonight {
+    padding: 20px 0;
+  }
+
+  .not-tonight .big-emoji {
+    font-size: 4rem;
+    margin-bottom: 16px;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .not-tonight h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
+    margin-bottom: 10px;
+  }
+
+  .not-tonight p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .next-info {
+    margin-top: 28px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .next-info strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* Calendar button */
+  .calendar-btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 22px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: border-color 0.2s, color 0.2s;
+    animation: fadeUp 0.6s 0.5s ease both;
+  }
+  .calendar-btn:hover {
+    border-color: var(--text);
+    color: var(--text);
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 24px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    opacity: 0.5;
+    animation: fadeUp 0.6s 0.6s ease both;
+    letter-spacing: 0.04em;
+  }
+
+  /* Keyframes */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.6) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-10px); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Bin Night</h1>
+    <div class="subtitle">15 Myers Street, Sans Souci · Zone 2</div>
+  </div>
+
+  <div class="date-chip" id="datechip"></div>
+
+  <div class="card" id="card">
+    <div id="content"></div>
+  </div>
+
+  <a class="calendar-btn" href="https://www.georgesriver.nsw.gov.au/StGeorge/media/Documents/Services/Waste%20and%20Recycling/WasteCalendars/Waste-Calendar-2026-Wed-Zone-2.pdf" target="_blank" rel="noopener">
+    📅 View full calendar
+  </a>
+
+  <div class="footer">Wednesday collection · General waste every week</div>
+</div>
+
+<script>
+  // ─── Schedule logic ───────────────────────────────────────────────────────
+  // Red every single week.
+  // Green and yellow alternate each week.
+  // Anchor: Wednesday 1 April 2026 = RED + GREEN (even week)
+  //   Week 0 (anchor): RED + GREEN
+  //   Week 1:          RED + YELLOW
+  //   Week 2:          RED + GREEN
+  //   Week 3:          RED + YELLOW  ... and so on
+
+  const ANCHOR = new Date(2026, 3, 1); // 1 April 2026 (month is 0-indexed)
+  const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+
+  function getNextWednesday(from) {
+    const d = new Date(from);
+    const day = d.getDay(); // 0=Sun, 3=Wed
+    const daysUntilWed = (3 - day + 7) % 7 || 7;
+    d.setDate(d.getDate() + daysUntilWed);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  function getBinsForWednesday(wed) {
+    const weeksDiff = Math.round((wed - ANCHOR) / MS_PER_WEEK);
+    const isEvenWeek = ((weeksDiff % 2) + 2) % 2 === 0;
+    const bins = [{ type: 'red', label: 'General Waste' }];
+    bins.push(isEvenWeek
+      ? { type: 'green',  label: 'Garden Waste' }
+      : { type: 'yellow', label: 'Recycling' }
+    );
+    return bins;
+  }
+
+  // ─── Bin SVG builder ─────────────────────────────────────────────────────
+  const BIN_COLORS = {
+    red:    { body: '#e84040', lid: '#c42828', stripe: '#ff7070', glow: 'rgba(232,64,64,0.4)' },
+    yellow: { body: '#f5c842', lid: '#d4a820', stripe: '#ffe080', glow: 'rgba(245,200,66,0.4)' },
+    green:  { body: '#4caf6e', lid: '#37895a', stripe: '#7de09a', glow: 'rgba(76,175,110,0.4)' },
+  };
+
+  function binSVG(type) {
+    const c = BIN_COLORS[type];
+    return `
+    <svg class="bin-svg" style="--bin-glow:${c.glow}" viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Lid -->
+      <rect x="8" y="12" width="64" height="12" rx="6" fill="${c.lid}"/>
+      <!-- Handle -->
+      <rect x="32" y="6" width="16" height="9" rx="4" fill="${c.lid}"/>
+      <!-- Body -->
+      <path d="M14 24 L18 92 Q18 96 22 96 L58 96 Q62 96 62 92 L66 24 Z" fill="${c.body}"/>
+      <!-- Stripe highlight -->
+      <path d="M28 24 L30 92" stroke="${c.stripe}" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+      <!-- Lid shine -->
+      <rect x="16" y="14" width="28" height="4" rx="2" fill="white" opacity="0.18"/>
+    </svg>`;
+  }
+
+  // ─── Render ───────────────────────────────────────────────────────────────
+  const now = new Date();
+  const today = now.getDay(); // 0=Sun … 6=Sat
+  const isTuesday = today === 2;
+
+  const datechip = document.getElementById('datechip');
+  const card = document.getElementById('card');
+  const content = document.getElementById('content');
+
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  datechip.textContent = `${days[today]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+  function formatDate(d) {
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+  }
+
+  function calendarDaysUntil(from, target) {
+    const a = new Date(from);
+    a.setHours(0, 0, 0, 0);
+    const b = new Date(target);
+    b.setHours(0, 0, 0, 0);
+    return Math.round((b - a) / (24 * 60 * 60 * 1000));
+  }
+
+  // Always show the next Wednesday's bins
+  const nextWed = getNextWednesday(now);
+  const bins = getBinsForWednesday(nextWed);
+
+  // Set card glow class
+  if (bins.some(b => b.type === 'yellow')) card.classList.add('glow-yellow');
+  else if (bins.some(b => b.type === 'green')) card.classList.add('glow-green');
+  else card.classList.add('glow-red');
+
+  const binsHTML = bins.map(b => `
+    <div class="bin-item">
+      ${binSVG(b.type)}
+      <span class="bin-label" style="color:${BIN_COLORS[b.type].body}">${b.label}</span>
+    </div>`).join('');
+
+  const statusLabel = isTuesday
+    ? `<div class="status-label">🌙 Put the bins out tonight</div>`
+    : `<div class="status-label">Next collection</div>`;
+
+  const daysLeft = calendarDaysUntil(now, nextWed);
+  let countdownHTML;
+  if (daysLeft <= 0) {
+    countdownHTML = `
+    <div class="countdown" aria-live="polite">
+      <span class="countdown-num">Today</span>
+      <span class="countdown-label">Collection day</span>
+    </div>`;
+  } else {
+    const unit = daysLeft === 1 ? 'day' : 'days';
+    countdownHTML = `
+    <div class="countdown" aria-live="polite">
+      <span class="countdown-num">${daysLeft}</span>
+      <span class="countdown-label">${unit} until collection</span>
+    </div>`;
+  }
+
+  content.innerHTML = `
+    ${statusLabel}
+    ${countdownHTML}
+    <div class="bins">${binsHTML}</div>
+    <div class="collection-day">
+      <span>${formatDate(nextWed)}</span>
+      <span class="day-badge">Wednesday</span>
+    </div>`;
+</script>
+</body>
+</html>

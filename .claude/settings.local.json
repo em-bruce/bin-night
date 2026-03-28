@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh api:*)",
+      "Bash(python3 -c \"import json,sys; [print\\(b[''''name'''']\\) for b in json.load\\(sys.stdin\\)]\")",
+      "Bash(gh run:*)",
+      "Bash(curl -sI https://em-bruce.github.io/bin-night/)"
+    ]
+  }
+}
